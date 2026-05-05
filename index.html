@@ -1,1 +1,513 @@
 <!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WA Channel Checker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --ease: cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] {
+  --bg:     #0a0e13;
+  --bg2:    #111820;
+  --card:   #161d27;
+  --card2:  #1c2536;
+  --input:  #1e2a38;
+  --border: rgba(255,255,255,0.07);
+  --text:   #e8edf3;
+  --sub:    #6b7f94;
+  --green:  #25d366;
+  --accent: #00c87a;
+  --accent2:#0ea5e9;
+  --glow:   rgba(37,211,102,0.15);
+  --shadow: rgba(0,0,0,0.5);
+}
+[data-theme="light"] {
+  --bg:     #f0f4f8;
+  --bg2:    #e8edf5;
+  --card:   #ffffff;
+  --card2:  #f8fafc;
+  --input:  #eef2f7;
+  --border: rgba(0,0,0,0.08);
+  --text:   #1a2332;
+  --sub:    #64748b;
+  --green:  #16a34a;
+  --accent: #059669;
+  --accent2:#0284c7;
+  --glow:   rgba(22,163,74,0.1);
+  --shadow: rgba(0,0,0,0.12);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  transition:background .4s var(--ease),color .4s var(--ease);
+}
+
+/* ── Animated BG ─────────────────── */
+.bg-orbs{
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+}
+.orb{
+  position:absolute;border-radius:50%;filter:blur(80px);opacity:.12;
+  animation:drift 12s ease-in-out infinite alternate;
+}
+.orb1{width:500px;height:500px;background:var(--green);top:-100px;left:-100px;animation-delay:0s}
+.orb2{width:400px;height:400px;background:var(--accent2);bottom:-80px;right:-80px;animation-delay:-4s}
+.orb3{width:300px;height:300px;background:var(--accent);top:40%;left:50%;animation-delay:-8s}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(40px,30px) scale(1.1)}}
+
+/* ── Layout ──────────────────────── */
+.wrapper{
+  position:relative;z-index:1;
+  max-width:620px;margin:0 auto;padding:24px 16px 60px;
+}
+
+/* ── Top bar ─────────────────────── */
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:36px;
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{
+  width:40px;height:40px;
+  background:linear-gradient(135deg,var(--green),var(--accent));
+  border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;box-shadow:0 4px 16px var(--glow);
+  animation:pulse-brand 3s ease-in-out infinite;
+}
+@keyframes pulse-brand{0%,100%{box-shadow:0 4px 16px var(--glow)}50%{box-shadow:0 4px 32px var(--glow),0 0 60px var(--glow)}}
+.brand-text .name{font-size:1.1rem;font-weight:700;letter-spacing:-.3px}
+.brand-text .tagline{font-size:.72rem;color:var(--sub);margin-top:1px}
+.controls{display:flex;gap:8px}
+.ctrl-btn{
+  width:36px;height:36px;border-radius:10px;border:1px solid var(--border);
+  background:var(--card);color:var(--text);cursor:pointer;font-size:1rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s var(--ease);box-shadow:0 2px 8px var(--shadow);
+}
+.ctrl-btn:hover{border-color:var(--accent);color:var(--accent);transform:scale(1.08)}
+.ctrl-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ── Hero ────────────────────────── */
+.hero{text-align:center;margin-bottom:32px;animation:fadeUp .6s var(--ease) both}
+.hero h1{
+  font-size:clamp(1.6rem,5vw,2.4rem);font-weight:800;line-height:1.15;
+  background:linear-gradient(135deg,var(--text) 30%,var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:10px;
+}
+.hero p{color:var(--sub);font-size:.9rem;line-height:1.6}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Card ────────────────────────── */
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:24px;margin-bottom:16px;
+  box-shadow:0 4px 24px var(--shadow);
+  transition:background .4s,border-color .4s;
+  animation:fadeUp .6s var(--ease) both;
+}
+.card:nth-child(2){animation-delay:.1s}
+.card:nth-child(3){animation-delay:.2s}
+
+/* ── Tabs ────────────────────────── */
+.tabs{display:flex;gap:6px;margin-bottom:20px;background:var(--bg2);border-radius:12px;padding:4px}
+.tab{
+  flex:1;padding:9px 8px;border-radius:9px;border:none;font-size:.8rem;font-weight:600;
+  background:transparent;color:var(--sub);cursor:pointer;transition:all .25s var(--ease);
+  font-family:'Inter',sans-serif;
+}
+.tab.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px var(--shadow)}
+
+/* ── Input group ─────────────────── */
+.input-group{
+  display:flex;gap:10px;margin-bottom:16px;
+  animation:fadeUp .5s var(--ease) both;
+}
+.input-wrap{
+  flex:1;position:relative;
+}
+.input-wrap .icon{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  color:var(--sub);font-size:1rem;pointer-events:none;
+}
+input{
+  width:100%;background:var(--input);border:1.5px solid transparent;
+  border-radius:12px;padding:12px 14px 12px 40px;color:var(--text);
+  font-size:.9rem;font-family:'Inter',sans-serif;outline:none;
+  transition:all .25s var(--ease);
+}
+input:focus{border-color:var(--accent);background:var(--bg2);box-shadow:0 0 0 4px var(--glow)}
+input::placeholder{color:var(--sub)}
+
+.btn{
+  background:linear-gradient(135deg,var(--green),var(--accent));
+  color:#fff;border:none;border-radius:12px;padding:12px 20px;
+  font-size:.88rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;
+  transition:all .2s var(--ease);box-shadow:0 4px 16px var(--glow);white-space:nowrap;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px var(--glow)}
+.btn:active{transform:translateY(0)}
+.btn.sec{background:var(--input);color:var(--sub);box-shadow:none}
+.btn.sec:hover{background:var(--card2);color:var(--text)}
+
+/* ── Result ──────────────────────── */
+.result{display:none;animation:slideDown .35s var(--ease) both}
+.result.show{display:block}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+.field{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--border);gap:12px;
+}
+.field:last-child{border-bottom:none}
+.field label{color:var(--sub);font-size:.78rem;font-weight:500;white-space:nowrap}
+.field .val{
+  display:flex;align-items:center;gap:8px;
+  font-size:.85rem;font-weight:500;text-align:right;word-break:break-all;
+  max-width:70%;
+}
+.mono{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--accent);font-weight:600}
+
+.copy-btn{
+  background:none;border:1px solid var(--border);color:var(--sub);
+  border-radius:7px;padding:3px 9px;font-size:.72rem;cursor:pointer;
+  transition:all .2s var(--ease);white-space:nowrap;font-family:'Inter',sans-serif;
+}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--glow)}
+.copy-btn.copied{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;
+}
+.badge.ok{background:rgba(37,211,102,.12);color:var(--green)}
+.badge.err{background:rgba(239,68,68,.12);color:#ef4444}
+.badge.blue{background:rgba(14,165,233,.12);color:var(--accent2)}
+
+/* ── JID Display ─────────────────── */
+.jid-display{
+  background:var(--bg2);border-radius:12px;padding:14px 16px;
+  font-family:'JetBrains Mono',monospace;font-size:.95rem;
+  color:var(--accent);word-break:break-all;margin:12px 0;
+  border:1px solid var(--border);position:relative;overflow:hidden;
+}
+.jid-display::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--glow),transparent);pointer-events:none;
+}
+.jid-parts .jid-id{color:var(--text);font-weight:600}
+.jid-parts .jid-sep{color:var(--sub)}
+.jid-parts .jid-sfx{color:var(--accent);font-weight:600}
+
+/* ── Error ───────────────────────── */
+.error-box{
+  background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);
+  border-radius:12px;padding:12px 16px;color:#ef4444;font-size:.85rem;
+  display:none;margin-top:12px;animation:shake .4s var(--ease);
+}
+.error-box.show{display:block}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ── Tip ─────────────────────────── */
+.tip{
+  background:linear-gradient(135deg,rgba(37,211,102,.06),rgba(14,165,233,.04));
+  border-left:3px solid var(--accent);border-radius:0 12px 12px 0;
+  padding:12px 16px;font-size:.82rem;color:var(--sub);margin-top:14px;line-height:1.7;
+}
+.tip strong{color:var(--accent)}
+.tip code{
+  background:var(--input);padding:2px 7px;border-radius:5px;
+  font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--text);
+}
+
+/* ── History ─────────────────────── */
+.hist-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;background:var(--input);border-radius:10px;margin-bottom:8px;
+  cursor:pointer;transition:all .2s var(--ease);border:1px solid transparent;
+}
+.hist-item:hover{border-color:var(--accent);background:var(--card2);transform:translateX(4px)}
+.hist-url{color:var(--sub);font-size:.8rem;max-width:75%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-time{color:var(--sub);font-size:.72rem;opacity:.7}
+.hist-key{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:.78rem}
+
+/* ── Loading spinner ─────────────── */
+.loading{text-align:center;padding:20px;display:none}
+.loading.show{display:block}
+.spinner{
+  width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Guide card ──────────────────── */
+.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+@media(max-width:480px){.guide-grid{grid-template-columns:1fr}}
+.guide-item{
+  background:var(--bg2);border-radius:12px;padding:14px;
+  border:1px solid var(--border);transition:border-color .2s;
+}
+.guide-item:hover{border-color:var(--accent)}
+.guide-item .gi-title{font-size:.8rem;font-weight:600;color:var(--accent);margin-bottom:6px}
+.guide-item code{
+  display:block;background:var(--input);border-radius:7px;padding:7px 10px;
+  font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text);
+  margin-top:5px;word-break:break-all;
+}
+
+/* ── Footer ──────────────────────── */
+footer{
+  text-align:center;color:var(--sub);font-size:.78rem;
+  padding:20px 0 10px;line-height:1.8;
+}
+footer span{color:var(--accent);font-weight:600}
+
+/* ── Floating toast ──────────────── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--card);border:1px solid var(--border);color:var(--text);
+  padding:10px 20px;border-radius:24px;font-size:.85rem;font-weight:500;
+  box-shadow:0 8px 32px var(--shadow);opacity:0;transition:all .3s var(--ease);
+  pointer-events:none;z-index:99;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Section title ───────────────── */
+.sec-title{
+  font-size:.72rem;font-weight:600;color:var(--sub);
+  text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;
+}
+.sec-header{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;
+}
+
+/* ── Pulse dot ───────────────────── */
+.dot{
+  width:8px;height:8px;border-radius:50%;background:var(--green);
+  display:inline-block;margin-right:6px;
+  animation:blink 2s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Stat chips ──────────────────── */
+.stats{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.stat{
+  flex:1;min-width:100px;background:var(--card2);border-radius:12px;
+  padding:14px;border:1px solid var(--border);text-align:center;
+}
+.stat .num{font-size:1.4rem;font-weight:800;color:var(--accent);font-family:'JetBrains Mono',monospace}
+.stat .lbl{font-size:.72rem;color:var(--sub);margin-top:2px}
+</style>
+</head>
+<body>
+
+<!-- Background orbs -->
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="wrapper">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">📡</div>
+      <div class="brand-text">
+        <div class="name">WA Channel Checker</div>
+        <div class="tagline" id="t-tagline">Cek ID & Info Saluran WhatsApp</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="ctrl-btn" id="lang-btn" onclick="toggleLang()" title="Language">🇮🇩</button>
+      <button class="ctrl-btn" id="theme-btn" onclick="toggleTheme()" title="Theme">🌙</button>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1 id="t-hero-title">Cek ID Saluran<br>WhatsApp dengan Mudah</h1>
+    <p id="t-hero-sub">Masukkan link saluran WA untuk mendapatkan JID newsletter, invite key, dan format perintah bot secara instan.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="num" id="stat-checked">0</div>
+      <div class="lbl" id="t-stat1">Dicek hari ini</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="stat-history">0</div>
+      <div class="lbl" id="t-stat2">Riwayat</div>
+    </div>
+    <div class="stat">
+      <div class="num">✓</div>
+      <div class="lbl" id="t-stat3">100% Offline</div>
+    </div>
+  </div>
+
+  <!-- Main card -->
+  <div class="card">
+    <div class="tabs" id="tabs">
+      <button class="tab active" onclick="switchTab('link')" id="tab-link">🔗 <span id="t-tab1">Link</span></button>
+      <button class="tab" onclick="switchTab('jid')" id="tab-jid">📋 <span id="t-tab2">JID</span></button>
+      <button class="tab" onclick="switchTab('convert')" id="tab-conv">🔄 <span id="t-tab3">Konversi</span></button>
+      <button class="tab" onclick="switchTab('extract')" id="tab-ext">⚡ <span id="t-tab4">Extract</span></button>
+    </div>
+
+    <!-- Tab: Link -->
+    <div id="pane-link">
+      <p class="sec-title" id="t-link-label">Masukkan Link Saluran WhatsApp</p>
+      <div class="input-group">
+        <div class="input-wrap">
+          <span class="icon">🔗</span>
+          <input id="link-input" type="text"
+            placeholder="https://whatsapp.com/channel/..." />
+        </div>
+        <button class="btn" onclick="parseLink()" id="t-link-btn">Cek</button>
+      </div>
+
+      <div class="loading" id="loading-link">
+        <div class="spinner"></div>
+        <p style="color:var(--sub);font-size:.85rem" id="t-loading">Menganalisis...</p>
+      </div>
+
+      <div class="result" id="result-link">
+        <div class="field">
+          <label id="t-r-status">Status</label>
+          <div class="val"><span class="dot"></span><span class="badge ok" id="r-status">Valid</span></div>
+        </div>
+        <div class="field">
+          <label id="t-r-key">Invite Key</label>
+          <div class="val">
+            <span class="mono" id="r-key">—</span>
+            <button class="copy-btn" onclick="copyId('r-key')">Salin</button>
+          </div>
+        </div>
+        <div class="field">
+          <label id="t-r-jid">JID Newsletter</label>
+          <div class="val" style="flex-direction:column;align-items:flex-end;gap:6px">
+            <div class="jid-display" id="r-jid-display">
+              <span class="jid-parts">
+                <span class="jid-id" id="r-jid-id">—</span><span class="jid-sep">@</span><span class="jid-sfx">newsletter</span>
+              </span>
+            </div>
+            <button class="copy-btn" onclick="copyId('r-jid-full')" style="font-size:.75rem" id="t-copy-jid">📋 Salin JID</button>
+            <span id="r-jid-full" style="display:none"></span>
+          </div>
+        </div>
+        <div class="field">
+          <label id="t-r-cmd">Perintah Bot</label>
+          <div class="val">
+            <span class="mono" id="r-cmd">—</span>
+            <button class="copy-btn" onclick="copyId('r-cmd')">Salin</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="error-box" id="error-link" id="t-err-link">
+        ❌ <span id="t-err-link-txt">Link tidak valid. Format yang diterima:<br><code>https://whatsapp.com/channel/XXXXX</code></span>
+      </div>
+
+      <div class="tip">
+        💡 <strong id="t-tip1-title">Cara dapat link saluran:</strong><br>
+        <span id="t-tip1-body">Buka saluran WA → ⋮ Menu → <em>Undang ke saluran</em> → Salin tautan</span>
+      </div>
+    </div>
+
+    <!-- Tab: JID -->
+    <div id="pane-jid" style="display:none">
+      <p class="sec-title" id="t-jid-label">Input JID atau ID Angka</p>
+      <div class="input-group">
+        <div class="input-wrap">
+          <span class="icon">📋</span>
+          <input id="jid-input" type="text"
+            placeholder="120363406345335540@newsletter" />
+        </div>
+        <button class="btn" onclick="parseJid()" id="t-jid-btn">Proses</button>
+      </div>
+
+      <div class="result" id="result-jid">
+        <div class="jid-display" style="margin-bottom:12px">
+          <span class="jid-parts">
+            <span class="jid-id" id="rj-id">—</span><span class="jid-sep">@</span><span class="jid-sfx">newsletter</span>
+          </span>
+        </div>
+        <div class="field">
+          <label id="t-rj-full">JID Lengkap</label>
+          <div class="val">
+            <span class="mono" id="rj-full">—</span>
+            <button class="copy-btn" onclick="copyId('rj-full')">Salin</button>
+          </div>
+        </div>
+        <div class="field">
+          <label id="t-rj-num">ID Angka</label>
+          <div class="val">
+            <span class="mono" id="rj-num">—</span>
+            <button class="copy-btn" onclick="copyId('rj-num')">Salin</button>
+          </div>
+        </div>
+        <div class="field">
+          <label id="t-rj-suffix">Suffix</label>
+          <div class="val"><span class="badge blue">@newsletter</span></div>
+        </div>
+        <div class="field">
+          <label id="t-rj-cmd">Perintah Bot</label>
+          <div class="val">
+            <span class="mono" id="rj-cmd">—</span>
+            <button class="copy-btn" onclick="copyId('rj-cmd')">Salin</button>
+          </div>
+        </div>
+      </div>
+      <div class="error-box" id="error-jid"><span id="t-err-jid">❌ Format tidak dikenali.</span></div>
+
+      <div class="tip">
+        💡 <strong id="t-tip2-title">Format JID saluran WA:</strong><br>
+        <span id="t-tip2-body">Format angka panjang + <code>@newsletter</code><br>
+        Contoh: <code>120363406345335540@newsletter</code><br>
+        Berbeda dari grup (<code>@g.us</code>) dan kontak (<code>@s.whatsapp.net</code>)</span>
+      </div>
+    </div>
+
+    <!-- Tab: Convert -->
+    <div id="pane-convert" style="display:none">
+      <p class="sec-title" id="t-conv-label">Konversi Semua Format Sekaligus</p>
+      <div class="input-group">
+        <div class="input-wrap">
+          <span class="icon">🔄</span>
+          <input id="conv-input" type="text"
+            placeholder="Link / JID / Invite key" />
+        </div>
+        <button class="btn" onclick="doConvert()" id="t-conv-btn">Konversi</button>
+      </div>
+
+      <div class="result" id="result-conv">
+        <div class="field">
+          <label id="t-rc-link">Link Saluran</label>
+          <div class="val">
+            <span class="mono" id="rc-link">—</span>
+            <button class="copy-btn" onclick="copyId('rc-link')">Salin</button>
+          </div>
+        </div>
+        <div class="field">
+          <label id="t-rc-key">Invite Key</label>
+          <div class="val">
+            <span class="mono" id="rc-key">—</span>
+            <button class="copy-btn" onclick="copyId('rc-key')">Salin</button>
+          </div>
+        </div>
+        <div class="jid-display" i
