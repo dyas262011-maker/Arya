@@ -1,1 +1,87 @@
 <!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Find Bin ID</title>
+<style>
+body{font-family:monospace;background:#0a0b14;color:#e8e9f5;padding:2rem;max-width:600px;margin:0 auto;}
+h2{color:#a78bfa;margin-bottom:1rem;}
+.box{background:#13141f;border:2px solid #7c3aed;padding:1.5rem;border-radius:4px;margin:1rem 0;word-break:break-all;}
+.id{font-size:1.2rem;color:#06b6d4;font-weight:900;margin:1rem 0;padding:.8rem;background:#0e0f1c;border:2px solid #06b6d4;}
+button{padding:.8rem 2rem;background:#7c3aed;color:#fff;border:2px solid #fff;font-family:monospace;font-size:1rem;cursor:pointer;display:block;width:100%;margin-bottom:.5rem;}
+button:hover{background:#5b21b6;}
+.err{color:#ef4444;}
+.ok{color:#059669;}
+pre{white-space:pre-wrap;font-size:.75rem;margin-top:.5rem;color:#8890b0;}
+</style>
+</head>
+<body>
+<h2>// FIND BIN ID</h2>
+<p>Tool ini mencari Bin ID dari JSONBin kamu.</p>
+<div class="box">
+  <div>Master Key: <span style="color:#a78bfa">$2a$10$vszwGPeGwo8ZKazw2ax7pOEojIMhAVJ.UpOLjGGLfIDJr5MExYyKG</span></div>
+  <div>Bin Name: <span style="color:#a78bfa">claudrya-prompt-hub</span></div>
+</div>
+
+<button onclick="findBin()">[ CARI BIN ID ]</button>
+<button onclick="listAllBins()">[ LIST SEMUA BIN ]</button>
+
+<div id="result"></div>
+
+<script>
+const MASTER = '$2a$10$vszwGPeGwo8ZKazw2ax7pOEojIMhAVJ.UpOLjGGLfIDJr5MExYyKG';
+const BASE   = 'https://api.jsonbin.io/v3';
+
+async function findBin() {
+  const el = document.getElementById('result');
+  el.innerHTML = '<div class="box">// Mencari...</div>';
+  try {
+    /* Coba akses bin dari localStorage dulu */
+    const cached = localStorage.getItem('cp_bin_id');
+    if (cached) {
+      const r = await fetch(BASE+'/b/'+cached+'/meta', { headers:{'X-Master-Key':MASTER} });
+      if (r.ok) {
+        const d = await r.json();
+        const name = d.metadata?.name || '';
+        el.innerHTML = `
+          <div class="box">
+            <div class="ok">// BIN DITEMUKAN DI LOCALSTORAGE!</div>
+            <div class="id">${cached}</div>
+            <div>Nama: <b>${name}</b></div>
+            <div style="margin-top:1rem;color:#a78bfa;font-size:.9rem">
+              // Copy ID di atas dan paste ke config.js<br/>
+              // CFG.binId = '${cached}'
+            </div>
+          </div>`;
+        return;
+      }
+    }
+
+    /* Coba list semua bin */
+    const r2 = await fetch(BASE+'/b?page=1&sortBy=createdAt&sortOrder=desc&limit=100', {
+      headers:{'X-Master-Key':MASTER}
+    });
+    const d2 = await r2.json();
+    el.innerHTML = '<div class="box"><pre>'+JSON.stringify(d2,null,2).slice(0,3000)+'</pre></div>';
+  } catch(e) {
+    el.innerHTML = '<div class="box err">// ERROR: '+e.message+'</div>';
+  }
+}
+
+async function listAllBins() {
+  const el = document.getElementById('result');
+  el.innerHTML = '<div class="box">// Loading semua bin...</div>';
+  try {
+    const r = await fetch(BASE+'/b?page=1&sortBy=createdAt&sortOrder=desc&limit=100', {
+      headers:{'X-Master-Key':MASTER}
+    });
+    const text = await r.text();
+    el.innerHTML = '<div class="box"><pre>'+text.slice(0,5000)+'</pre></div>';
+  } catch(e) {
+    el.innerHTML = '<div class="box err">// ERROR: '+e.message+'</div>';
+  }
+}
+</script>
+</body>
+</html>
