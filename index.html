@@ -3,84 +3,124 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Find Bin ID</title>
+<title>Find Bin ID — Claudrya</title>
 <style>
-body{font-family:monospace;background:#0a0b14;color:#e8e9f5;padding:2rem;max-width:600px;margin:0 auto;}
-h2{color:#a78bfa;margin-bottom:1rem;}
-.box{background:#13141f;border:2px solid #7c3aed;padding:1.5rem;border-radius:4px;margin:1rem 0;word-break:break-all;}
-.id{font-size:1.2rem;color:#06b6d4;font-weight:900;margin:1rem 0;padding:.8rem;background:#0e0f1c;border:2px solid #06b6d4;}
-button{padding:.8rem 2rem;background:#7c3aed;color:#fff;border:2px solid #fff;font-family:monospace;font-size:1rem;cursor:pointer;display:block;width:100%;margin-bottom:.5rem;}
-button:hover{background:#5b21b6;}
-.err{color:#ef4444;}
-.ok{color:#059669;}
-pre{white-space:pre-wrap;font-size:.75rem;margin-top:.5rem;color:#8890b0;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'JetBrains Mono',monospace;background:#0a0b14;color:#e8e9f5;padding:1.5rem;max-width:560px;margin:0 auto;min-height:100vh;}
+h2{color:#a78bfa;font-size:1.1rem;margin-bottom:.5rem;letter-spacing:1px;}
+p{font-size:.8rem;color:#8890b0;line-height:1.7;margin-bottom:1.2rem;}
+.card{background:#13141f;border:2px solid #2a2c42;padding:1.2rem;margin-bottom:1rem;}
+.card-title{font-size:.65rem;color:#454860;letter-spacing:2px;text-transform:uppercase;margin-bottom:.6rem;}
+.id-box{font-size:1rem;color:#06b6d4;padding:.8rem;background:#0e0f1c;border:2px solid #06b6d4;word-break:break-all;margin:.6rem 0;display:none;}
+.id-box.show{display:block;}
+.copy-btn{width:100%;padding:.75rem;background:#7c3aed;color:#fff;border:2px solid #fff;font-family:monospace;font-size:.85rem;cursor:pointer;letter-spacing:1px;text-transform:uppercase;margin-bottom:.5rem;box-shadow:3px 3px 0 #fff;transition:transform .1s,box-shadow .1s;}
+.copy-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #fff;}
+.ok{color:#059669;font-size:.85rem;margin:.5rem 0;}
+.err{color:#ef4444;font-size:.8rem;margin:.5rem 0;}
+.warn{color:#d97706;font-size:.8rem;line-height:1.7;margin:.5rem 0;}
+.step{background:#13141f;border-left:3px solid #7c3aed;padding:.8rem 1rem;margin-bottom:.6rem;font-size:.8rem;line-height:1.8;}
+.step b{color:#a78bfa;}
+.badge{display:inline-block;background:#7c3aed;color:#fff;font-size:.62rem;padding:.15rem .5rem;letter-spacing:1px;}
 </style>
 </head>
 <body>
 <h2>// FIND BIN ID</h2>
-<p>Tool ini mencari Bin ID dari JSONBin kamu.</p>
-<div class="box">
-  <div>Master Key: <span style="color:#a78bfa">$2a$10$vszwGPeGwo8ZKazw2ax7pOEojIMhAVJ.UpOLjGGLfIDJr5MExYyKG</span></div>
-  <div>Bin Name: <span style="color:#a78bfa">claudrya-prompt-hub</span></div>
+<p>Tool untuk menemukan Bin ID JSONBin yang tersimpan di browser ini.</p>
+
+<div class="card">
+  <div class="card-title">// Step 1 — Cek LocalStorage</div>
+  <button class="copy-btn" onclick="checkLocal()">[ CEK BIN ID DI BROWSER INI ]</button>
+  <div id="localResult"></div>
 </div>
 
-<button onclick="findBin()">[ CARI BIN ID ]</button>
-<button onclick="listAllBins()">[ LIST SEMUA BIN ]</button>
+<div class="card">
+  <div class="card-title">// Step 2 — Test Koneksi Bin</div>
+  <p style="font-size:.78rem;color:#8890b0;margin-bottom:.6rem">Masukkan Bin ID untuk test apakah bisa diakses:</p>
+  <input id="testId" placeholder="paste bin ID di sini..." style="width:100%;padding:.6rem .8rem;background:#0e0f1c;border:2px solid #2a2c42;color:#e8e9f5;font-family:monospace;font-size:.82rem;margin-bottom:.5rem;outline:none;"/>
+  <button class="copy-btn" onclick="testBin()">[ TEST BIN ID ]</button>
+  <div id="testResult"></div>
+</div>
 
-<div id="result"></div>
+<div class="card" id="resultCard" style="display:none">
+  <div class="card-title">// Bin ID Ditemukan</div>
+  <div class="id-box show" id="foundId"></div>
+  <button class="copy-btn" onclick="copyId()">[ COPY BIN ID ]</button>
+  <div id="copyMsg"></div>
+  <div class="warn">Kirim ID ini ke Claude untuk di-hardcode ke config.js</div>
+</div>
+
+<div class="card">
+  <div class="card-title">// Cara Manual (jika tidak ketemu)</div>
+  <div class="step">1. Buka web Claudrya Prompt di browser yang pernah dipakai tambah prompt</div>
+  <div class="step">2. Tekan <b>F12</b> (desktop) atau ketuk <b>...</b> lalu Developer Tools</div>
+  <div class="step">3. Buka tab <b>Console</b></div>
+  <div class="step">4. Ketik: <b>localStorage.getItem('cp_bin_id')</b> lalu tekan Enter</div>
+  <div class="step">5. Copy hasilnya (string panjang) dan kirim ke Claude</div>
+</div>
 
 <script>
 const MASTER = '$2a$10$vszwGPeGwo8ZKazw2ax7pOEojIMhAVJ.UpOLjGGLfIDJr5MExYyKG';
 const BASE   = 'https://api.jsonbin.io/v3';
+let foundBinId = '';
 
-async function findBin() {
-  const el = document.getElementById('result');
-  el.innerHTML = '<div class="box">// Mencari...</div>';
-  try {
-    /* Coba akses bin dari localStorage dulu */
-    const cached = localStorage.getItem('cp_bin_id');
-    if (cached) {
-      const r = await fetch(BASE+'/b/'+cached+'/meta', { headers:{'X-Master-Key':MASTER} });
-      if (r.ok) {
-        const d = await r.json();
-        const name = d.metadata?.name || '';
-        el.innerHTML = `
-          <div class="box">
-            <div class="ok">// BIN DITEMUKAN DI LOCALSTORAGE!</div>
-            <div class="id">${cached}</div>
-            <div>Nama: <b>${name}</b></div>
-            <div style="margin-top:1rem;color:#a78bfa;font-size:.9rem">
-              // Copy ID di atas dan paste ke config.js<br/>
-              // CFG.binId = '${cached}'
-            </div>
-          </div>`;
-        return;
-      }
-    }
+function checkLocal() {
+  const el = document.getElementById('localResult');
+  const id  = localStorage.getItem('cp_bin_id');
 
-    /* Coba list semua bin */
-    const r2 = await fetch(BASE+'/b?page=1&sortBy=createdAt&sortOrder=desc&limit=100', {
-      headers:{'X-Master-Key':MASTER}
-    });
-    const d2 = await r2.json();
-    el.innerHTML = '<div class="box"><pre>'+JSON.stringify(d2,null,2).slice(0,3000)+'</pre></div>';
-  } catch(e) {
-    el.innerHTML = '<div class="box err">// ERROR: '+e.message+'</div>';
+  if (id) {
+    foundBinId = id;
+    el.innerHTML = '<div class="ok">// Ditemukan di localStorage!</div>';
+    showResult(id);
+    /* Auto-test */
+    document.getElementById('testId').value = id;
+    testBin();
+  } else {
+    el.innerHTML = '<div class="err">// Tidak ada Bin ID di browser ini.<br/>Coba buka file ini di browser/device yang sama dengan web Claudrya Prompt.</div>';
   }
 }
 
-async function listAllBins() {
-  const el = document.getElementById('result');
-  el.innerHTML = '<div class="box">// Loading semua bin...</div>';
+async function testBin() {
+  const id  = document.getElementById('testId').value.trim();
+  const el  = document.getElementById('testResult');
+  if (!id) { el.innerHTML = '<div class="err">// Masukkan Bin ID dulu</div>'; return; }
+  el.innerHTML = '<div style="color:#8890b0;font-size:.8rem">// Testing...</div>';
   try {
-    const r = await fetch(BASE+'/b?page=1&sortBy=createdAt&sortOrder=desc&limit=100', {
-      headers:{'X-Master-Key':MASTER}
-    });
-    const text = await r.text();
-    el.innerHTML = '<div class="box"><pre>'+text.slice(0,5000)+'</pre></div>';
+    const r = await fetch(BASE+'/b/'+id+'/latest', { headers:{'X-Master-Key':MASTER} });
+    if (r.ok) {
+      const d = await r.json();
+      const jbLen = (d.record?.jb||[]).length;
+      const ftLen = (d.record?.ft||[]).length;
+      el.innerHTML = '<div class="ok">// Berhasil terhubung!</div>'+
+        '<div style="font-size:.8rem;color:#8890b0;margin-top:.3rem">'+
+        'Jailbreak: <b style="color:#a78bfa">'+jbLen+'</b> prompt | '+
+        'Foto: <b style="color:#06b6d4">'+ftLen+'</b> prompt</div>';
+      foundBinId = id;
+      showResult(id);
+    } else {
+      el.innerHTML = '<div class="err">// Gagal: HTTP '+r.status+'</div>';
+    }
   } catch(e) {
-    el.innerHTML = '<div class="box err">// ERROR: '+e.message+'</div>';
+    el.innerHTML = '<div class="err">// Error: '+e.message+'</div>';
   }
+}
+
+function showResult(id) {
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('foundId').textContent = id;
+  foundBinId = id;
+}
+
+function copyId() {
+  if (!foundBinId) return;
+  navigator.clipboard.writeText(foundBinId).then(() => {
+    document.getElementById('copyMsg').innerHTML = '<div class="ok">// Tersalin! Kirim ke Claude.</div>';
+  }).catch(() => {
+    /* Fallback */
+    const ta = document.createElement('textarea');
+    ta.value = foundBinId;
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    document.getElementById('copyMsg').innerHTML = '<div class="ok">// Tersalin!</div>';
+  });
 }
 </script>
 </body>
